@@ -1,7 +1,7 @@
 simple-db
 =========
 
-Code for all 6.830 labs will be available in this repo. Once you have set up your class repo, you pull lab code from here.
+MIT 6.830 labs 
 
 Directions for Repo Setup
 -------------------------
