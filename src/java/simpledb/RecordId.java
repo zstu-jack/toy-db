@@ -23,6 +23,7 @@ public class RecordId implements Serializable {
         // some code goes here
     }
 
+
     /**
      * @return the tuple number this RecordId references.
      */
