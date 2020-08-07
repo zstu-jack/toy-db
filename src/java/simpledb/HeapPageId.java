@@ -3,6 +3,10 @@ package simpledb;
 /** Unique identifier for HeapPage objects. */
 public class HeapPageId implements PageId {
 
+    private Integer tableID;
+
+    private Integer pageNo;
+
     /**
      * Constructor. Create a page id structure for a specific page of a
      * specific table.
@@ -12,12 +16,14 @@ public class HeapPageId implements PageId {
      */
     public HeapPageId(int tableId, int pgNo) {
         // some code goes here
+        this.tableID = tableId;
+        this.pageNo = pgNo;
     }
 
     /** @return the table associated with this PageId */
     public int getTableId() {
         // some code goes here
-        return 0;
+        return this.tableID;
     }
 
     /**
@@ -26,7 +32,7 @@ public class HeapPageId implements PageId {
      */
     public int getPageNumber() {
         // some code goes here
-        return 0;
+        return pageNo;
     }
 
     /**
@@ -37,7 +43,9 @@ public class HeapPageId implements PageId {
      */
     public int hashCode() {
         // some code goes here
-        throw new UnsupportedOperationException("implement this");
+        String left = String.valueOf(tableID);
+        String right = String.valueOf(pageNo);
+        return Integer.valueOf(left+right);
     }
 
     /**
@@ -49,6 +57,17 @@ public class HeapPageId implements PageId {
      */
     public boolean equals(Object o) {
         // some code goes here
+        if(o == null) {
+            return false;
+        }
+        if(!(o instanceof HeapPageId)){
+            return false;
+        }
+        HeapPageId heapPageId = (HeapPageId)o;
+        // bug: Todo: add intValue for all integer comparesions.
+        if((heapPageId.pageNo.intValue() == pageNo.intValue())  && (heapPageId.tableID.intValue() == tableID.intValue())){
+            return true;
+        }
         return false;
     }
 

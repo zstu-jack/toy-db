@@ -95,14 +95,14 @@ public class HeapFileEncoder {
       for (int i = 0; i < numFields ; i++) {
           nrecbytes += typeAr[i].getLen();
       }
-      int nrecords = (npagebytes * 8) /  (nrecbytes * 8 + 1);  //floor comes for free
+      int nrecords = (npagebytes * 8) /  (nrecbytes * 8 + 1);  //floor comes for free               // tuple's size..
       
     //  per record, we need one bit; there are nrecords per page, so we need
     // nrecords bits, i.e., ((nrecords/32)+1) integers.
     int nheaderbytes = (nrecords / 8);
     if (nheaderbytes * 8 < nrecords)
         nheaderbytes++;  //ceiling
-    int nheaderbits = nheaderbytes * 8;
+    int nheaderbits = nheaderbytes * 8;                                                     // header's bytes.
 
     BufferedReader br = new BufferedReader(new FileReader(inFile));
     FileOutputStream os = new FileOutputStream(outFile);

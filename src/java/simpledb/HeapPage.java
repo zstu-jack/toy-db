@@ -67,7 +67,9 @@ public class HeapPage implements Page {
     */
     private int getNumTuples() {        
         // some code goes here
-        return 0;
+        // floor((BufferPool.getPageSize()*8) / (tuple size * 8 + 1))
+        // bytes / (bytes for per tuple(tuple's size + header))
+        return (BufferPool.getPageSize()*8) / (td.getSize() * 8 + 1);
 
     }
 
@@ -75,11 +77,15 @@ public class HeapPage implements Page {
      * Computes the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
      * @return the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
      */
-    private int getHeaderSize() {        
-        
+    private int getHeaderSize() {
         // some code goes here
-        return 0;
-                 
+        int result = getNumTuples() / 8;
+        if(getNumTuples() % 8 != 0) {
+            result += 1;
+        }
+        return result;
+                 // one bit one tuple.
+                // return bytes used.
     }
     
     /** Return a view of this page before it was modified
@@ -103,7 +109,7 @@ public class HeapPage implements Page {
     public void setBeforeImage() {
         synchronized(oldDataLock)
         {
-        oldData = getPageData().clone();
+            oldData = getPageData().clone();
         }
     }
 
@@ -111,8 +117,8 @@ public class HeapPage implements Page {
      * @return the PageId associated with this page.
      */
     public HeapPageId getId() {
-    // some code goes here
-    throw new UnsupportedOperationException("implement this");
+        // some code goes here
+        return pid;
     }
 
     /**
@@ -282,7 +288,13 @@ public class HeapPage implements Page {
      */
     public int getNumEmptySlots() {
         // some code goes here
-        return 0;
+        int result = 0;
+        for(int i = 0; i < numSlots / 8; ++ i){
+            for(int j = 0; j < 8; j ++) {
+                result += (header[i] >> j) & 1;
+            }
+        }
+        return numSlots - result;
     }
 
     /**
@@ -290,7 +302,8 @@ public class HeapPage implements Page {
      */
     public boolean isSlotUsed(int i) {
         // some code goes here
-        return false;
+        // The low (least significant) bits of each byte represents the status of the slots that are earlier in the file. Hence, the lowest bit of the first byte represents whether or not the first slot in the page is in use.
+        return ((header[i/8] >> (i%8))&1) == 1;
     }
 
     /**
@@ -307,7 +320,13 @@ public class HeapPage implements Page {
      */
     public Iterator<Tuple> iterator() {
         // some code goes here
-        return null;
+        ArrayList<Tuple> tuplesArr = new ArrayList<>();
+        for(int i = 0; i < numSlots; ++ i){
+            if(isSlotUsed(i)){
+                tuplesArr.add(tuples[i]);
+            }
+        }
+        return tuplesArr.iterator();
     }
 
 }
