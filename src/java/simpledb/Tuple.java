@@ -31,6 +31,9 @@ public class Tuple implements Serializable {
         // some code goes here
         tupleDesc = td;
         fields = new ArrayList<>(td.numFields());
+        for(int i = 0; i < tupleDesc.numFields(); ++ i){
+            fields.add(null);
+        }
     }
 
     /**
@@ -71,6 +74,9 @@ public class Tuple implements Serializable {
      */
     public void setField(int i, Field f) {
         // some code goes here
+        if(i < 0 || i >= fields.size()){
+            return ;
+        }
         fields.set(i, f);
     }
 
@@ -82,6 +88,9 @@ public class Tuple implements Serializable {
      */
     public Field getField(int i) {
         // some code goes here
+        if(i < 0 || i >= fields.size()){
+            return null;
+        }
         return fields.get(i);
     }
 
