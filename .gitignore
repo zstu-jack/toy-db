@@ -4,3 +4,5 @@
 bin/
 dist/
 log
+*.txt
+*.dat
