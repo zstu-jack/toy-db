@@ -122,6 +122,9 @@ public class TupleDesc implements Serializable {
      */
     public Type getFieldType(int i) throws NoSuchElementException {
         // some code goes here
+        if(i < 0 || i >= tdItems.size()){
+            throw new NoSuchElementException();
+        }
         return tdItems.get(i).fieldType;
     }
 
