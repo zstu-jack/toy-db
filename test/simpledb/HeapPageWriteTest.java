@@ -33,7 +33,7 @@ public class HeapPageWriteTest extends SimpleDbTestBase {
      */
     @Test public void testDirty() throws Exception {
         TransactionId tid = new TransactionId();
-        HeapPage page = new HeapPage(pid, HeapPageReadTest.EXAMPLE_DATA);
+        HeapPage page = new HeapPage(pid, simpledb.HeapPageReadTest.EXAMPLE_DATA);
         page.markDirty(true, tid);
         TransactionId dirtier = page.isDirty();
         assertEquals(true, dirtier != null);
@@ -48,7 +48,7 @@ public class HeapPageWriteTest extends SimpleDbTestBase {
      * Unit test for HeapPage.addTuple()
      */
     @Test public void addTuple() throws Exception {
-        HeapPage page = new HeapPage(pid, HeapPageReadTest.EXAMPLE_DATA);
+        HeapPage page = new HeapPage(pid, simpledb.HeapPageReadTest.EXAMPLE_DATA);
         int free = page.getNumEmptySlots();
 
         // NOTE(ghuo): this nested loop existence check is slow, but it
@@ -65,10 +65,10 @@ public class HeapPageWriteTest extends SimpleDbTestBase {
             boolean found = false;
             while (it.hasNext()) {
                 Tuple tup = it.next();
-                if (TestUtil.compareTuples(addition, tup)) {
+                if (simpledb.TestUtil.compareTuples(addition, tup)) {
                     found = true;
 
-                    // verify that the RecordId is sane
+                    // verify that the RecordId is same
                     assertEquals(page.getId(), tup.getRecordId().getPageId());
                     break;
                 }
@@ -90,7 +90,7 @@ public class HeapPageWriteTest extends SimpleDbTestBase {
      */
     @Test(expected=DbException.class)
         public void deleteNonexistentTuple() throws Exception {
-        HeapPage page = new HeapPage(pid, HeapPageReadTest.EXAMPLE_DATA);
+        HeapPage page = new HeapPage(pid, simpledb.HeapPageReadTest.EXAMPLE_DATA);
         page.deleteTuple(Utility.getHeapTuple(2, 2));
     }
 
@@ -98,7 +98,7 @@ public class HeapPageWriteTest extends SimpleDbTestBase {
      * Unit test for HeapPage.deleteTuple()
      */
     @Test public void deleteTuple() throws Exception {
-        HeapPage page = new HeapPage(pid, HeapPageReadTest.EXAMPLE_DATA);
+        HeapPage page = new HeapPage(pid, simpledb.HeapPageReadTest.EXAMPLE_DATA);
         int free = page.getNumEmptySlots();
 
         // first, build a list of the tuples on the page.
