@@ -192,6 +192,7 @@ public class HeapFile implements DbFile {
                 continue;
             }
             page.insertTuple(t);
+            pages.add(page);
             return pages;
         }
         // todo: or may put in BufferPool and call read. then create new Page?
@@ -204,6 +205,7 @@ public class HeapFile implements DbFile {
         newPage.insertTuple(t);
         pages.add(newPage);
         writePage(newPage);
+        Database.getBufferPool().getPage(tid, new HeapPageId(getId(), numPages()-1),Permissions.READ_WRITE);
         return pages;
 
     }
@@ -217,6 +219,8 @@ public class HeapFile implements DbFile {
         HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), Permissions.READ_WRITE);
         page.deleteTuple(t);
         pages.add(page);
+        // disk access's control in BufferPools.
+        // but write to disk in this class.
         return pages;
 
     }

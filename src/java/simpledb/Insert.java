@@ -8,6 +8,14 @@ public class Insert extends Operator {
 
     private static final long serialVersionUID = 1L;
 
+    private TransactionId transactionId;
+
+    private OpIterator child;
+
+    int tableId;
+
+    int called = 0;
+
     /**
      * Constructor.
      *
@@ -24,23 +32,37 @@ public class Insert extends Operator {
     public Insert(TransactionId t, OpIterator child, int tableId)
             throws DbException {
         // some code goes here
+        this.transactionId = t;
+        this.child = child;
+        this.tableId = tableId;
+        this.called = 0;
     }
 
     public TupleDesc getTupleDesc() {
         // some code goes here
-        return null;
+
+        // attention here...
+        // not child's tupledesc
+        // a tupledesc that describle the number of tuples that have been success inserted.
+        Type types[] = new Type[]{ Type.INT_TYPE};
+        TupleDesc tupleDesc = new TupleDesc(types);
+        return tupleDesc;
     }
 
     public void open() throws DbException, TransactionAbortedException {
         // some code goes here
+        this.child.open();  // child iterate tuples that be insert.
+        super.open();       // result tuple iterator
     }
 
     public void close() {
         // some code goes here
+        this.child.close();
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
         // some code goes here
+        this.child.close();
     }
 
     /**
@@ -58,17 +80,37 @@ public class Insert extends Operator {
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         // some code goes here
-        return null;
+        if(this.called == 1){
+            return null;
+        }
+        this.called = 1;
+
+        int count = 0;
+        while(child.hasNext()){
+            try {
+                Database.getBufferPool().insertTuple(transactionId, tableId, child.next());
+                ++ count;
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+        // construct a 3-column table schema
+        Type types[] = new Type[]{ Type.INT_TYPE};
+        TupleDesc tupleDesc = new TupleDesc(types);
+        Tuple tuple = new Tuple(tupleDesc);
+        tuple.setField(0, new IntField(count));
+        return tuple;
     }
 
     @Override
     public OpIterator[] getChildren() {
         // some code goes here
-        return null;
+        return new OpIterator[]{child};
     }
 
     @Override
     public void setChildren(OpIterator[] children) {
         // some code goes here
+        this.child = children[0];
     }
 }

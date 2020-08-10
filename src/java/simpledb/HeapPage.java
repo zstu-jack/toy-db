@@ -291,6 +291,7 @@ public class HeapPage implements Page {
                 return;
             }
         }
+        throw new DbException("no empty slots");
     }
 
     /**

@@ -61,7 +61,7 @@ public class RecordId implements Serializable {
             return false;
         }
         RecordId recordId = (RecordId)o;
-        return recordId.tupleNo == tupleNo && recordId.pageId.equals(pageId);
+        return recordId.tupleNo.intValue() == tupleNo.intValue() && recordId.pageId.equals(pageId);
     }
 
     /**

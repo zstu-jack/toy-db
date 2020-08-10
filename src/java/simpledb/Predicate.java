@@ -116,6 +116,6 @@ public class Predicate implements Serializable {
      */
     public String toString() {
         // some code goes here
-        return "field：" + field + ", op：" + op.toString() + ", operand：" + operand.toString();
+        return "field:" + field + ", op:" + op.toString() + ", operand:" + operand.toString();
     }
 }
