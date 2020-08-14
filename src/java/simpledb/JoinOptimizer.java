@@ -111,7 +111,10 @@ public class JoinOptimizer {
             // HINT: You may need to use the variable "j" if you implemented
             // a join algorithm that's more complicated than a basic
             // nested-loops join.
-            return -1.0;
+
+            //- joincost(t1 join t2) = scancost(t1) + ntups(t1) x scancost(t2) //IO cost
+            //                  + ntups(t1) x ntups(t2)  //CPU cost
+            return cost1 + card1*cost2 + card1*card2;
         }
     }
 
@@ -141,6 +144,7 @@ public class JoinOptimizer {
             // You do not need to implement proper support for these for Lab 3.
             return card1;
         } else {
+
             return estimateTableJoinCardinality(j.p, j.t1Alias, j.t2Alias,
                     j.f1PureName, j.f2PureName, card1, card2, t1pkey, t2pkey,
                     stats, p.getTableAliasToIdMapping());
@@ -157,6 +161,31 @@ public class JoinOptimizer {
             Map<String, Integer> tableAliasToId) {
         int card = 1;
         // some code goes here
+
+        // bug: FIXME
+
+        if (joinOp == Predicate.Op.EQUALS && t1pkey && t2pkey) {
+            card = Math.min(card1, card2);
+        } else if (joinOp == Predicate.Op.EQUALS && t1pkey) {
+            card = card2;
+        } else if (joinOp == Predicate.Op.EQUALS && t2pkey) {
+            card = card1;
+        } else if (joinOp == Predicate.Op.EQUALS && !t1pkey && !t2pkey) {
+            // no primary key table, heristic
+            card = Math.max(card1, card2);
+        } else if (joinOp == Predicate.Op.NOT_EQUALS && t1pkey && t2pkey) {
+            card = card1 * card2 - (Math.min(card1, card2));
+        } else if (joinOp == Predicate.Op.NOT_EQUALS && t1pkey) {
+            card = card1 * card2 - card2;
+        } else if (joinOp == Predicate.Op.NOT_EQUALS && t2pkey) {
+            card = card1 * card2 - card1;
+        } else if (joinOp == Predicate.Op.NOT_EQUALS && !t1pkey && !t2pkey) {
+            card = (card1 * card2) - Math.max(card1, card2);
+        } else {
+            // range search heroistic
+            card = card1 * card2 / 3;
+        }
+
         return card <= 0 ? 1 : card;
     }
 
@@ -221,7 +250,36 @@ public class JoinOptimizer {
 
         // some code goes here
         //Replace the following
-        return joins;
+        // return joins;
+
+        // buf: fixme. copy from https://github.com/cornerpocket407/MIT-6.830-SimpleDB/blob/master/lab5/src/java/simpledb/JoinOptimizer.java
+
+        int numJoinNodes = this.joins.size();
+        PlanCache memo = new PlanCache();
+        for (int i = 1; i <= numJoinNodes; i ++) {
+            Set<Set<LogicalJoinNode>> setOfSubset = this.enumerateSubsets(this.joins, i);
+            for (Set<LogicalJoinNode> s : setOfSubset) {
+                // this.computeCostAndCardOfSubplan(stats, filterSelectivities, toRemove, sub, best, memo);
+                Double bestCostSofar = Double.MAX_VALUE;
+                CostCard bestPlan = new CostCard();
+                for (LogicalJoinNode toRemove : s) {
+                    CostCard plan = this.computeCostAndCardOfSubplan(stats, filterSelectivities, toRemove, s, bestCostSofar, memo);
+                    if (plan != null) {
+                        bestCostSofar = plan.cost;
+                        bestPlan = plan;
+                    }
+                }
+                // if (bestPlan.plan.size() == 0) throw new ParsingException("error: no plan are found");
+                memo.addPlan(s, bestPlan.cost, bestPlan.card, bestPlan.plan);
+            }
+        }
+        Set<LogicalJoinNode> wholeSet = this.enumerateSubsets(this.joins, numJoinNodes).iterator().next();
+//        if(explain){
+//            printJoins(memo.bestOrders.get(wholeSet),memo,stats, filterSelectivities);
+//        }
+
+        return memo.bestOrders.get(wholeSet);
+
     }
 
     // ===================== Private Methods =================================
