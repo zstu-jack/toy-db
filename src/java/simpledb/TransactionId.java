@@ -21,7 +21,12 @@ public class TransactionId implements Serializable {
         return myid;
     }
 
-    @Override
+	@Override
+	public String toString() {
+		return "TransactionId: " + myid + " ";
+	}
+
+	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;

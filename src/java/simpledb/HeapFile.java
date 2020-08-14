@@ -37,7 +37,7 @@ public class HeapFile implements DbFile {
         public void open()throws TransactionAbortedException, DbException {
             this.curPageNo = 0;
             HeapPageId heapPageId = new HeapPageId(tableId, curPageNo);
-            curPage = (HeapPage) Database.getBufferPool().getPage(transactionId, heapPageId, Permissions.READ_ONLY);
+            curPage = (HeapPage) Database.getBufferPool().getPage(transactionId, heapPageId, Permissions.READ_WRITE);
             tupleIterator = curPage.iterator();
 
         }
@@ -53,7 +53,7 @@ public class HeapFile implements DbFile {
             while (curPageNo+1 < numPages()){
                 curPageNo += 1;
                 HeapPageId heapPageId = new HeapPageId(tableId, curPageNo);
-                curPage = (HeapPage) Database.getBufferPool().getPage(transactionId, heapPageId, Permissions.READ_ONLY);
+                curPage = (HeapPage) Database.getBufferPool().getPage(transactionId, heapPageId, Permissions.READ_WRITE);
                 tupleIterator = curPage.iterator();
                 if(tupleIterator.hasNext()){
                     return true;
@@ -147,6 +147,18 @@ public class HeapFile implements DbFile {
         // some code goes here
         Page page = null;
         try {
+            if(file.length() <= BufferPool.getPageSize() * pid.getPageNumber()){
+                //System.out.println("new Page in read Page");
+                byte[] b = new byte[BufferPool.getPageSize()];
+                for(int i = 0; i < BufferPool.getPageSize(); ++ i){
+                    b[i] = 0;
+                }
+                HeapPage newPage = new HeapPage(new HeapPageId(getId(), numPages()), b);
+                writePage(newPage);
+                return newPage;
+            }
+
+
             FileInputStream fis = new FileInputStream(file);
             byte[] b = new byte[BufferPool.getPageSize()];
             fis.skip(BufferPool.getPageSize() * pid.getPageNumber());
@@ -195,17 +207,24 @@ public class HeapFile implements DbFile {
             pages.add(page);
             return pages;
         }
-        // todo: or may put in BufferPool and call read. then create new Page?
-        // now create here;
-        byte[] b = new byte[BufferPool.getPageSize()];
-        for(int i = 0; i < BufferPool.getPageSize(); ++ i){
-            b[i] = 0;
-        }
-        HeapPage newPage = new HeapPage(new HeapPageId(getId(), numPages()), b);
+
+
+        // fixme: File Lock
+
+        // function of create page move to readPage.
+        // not write new tuples to disk (transaction)
+//        byte[] b = new byte[BufferPool.getPageSize()];
+//        for(int i = 0; i < BufferPool.getPageSize(); ++ i){
+//            b[i] = 0;
+//        }
+//        HeapPage newPage = new HeapPage(new HeapPageId(getId(), numPages()), b);
+//        newPage.insertTuple(t);
+//        pages.add(newPage);
+//        writePage(newPage);
+
+        HeapPage newPage  = (HeapPage) Database.getBufferPool().getPage(tid, new HeapPageId(getId(), numPages()),Permissions.READ_WRITE);
         newPage.insertTuple(t);
         pages.add(newPage);
-        writePage(newPage);
-        Database.getBufferPool().getPage(tid, new HeapPageId(getId(), numPages()-1),Permissions.READ_WRITE);
         return pages;
 
     }
