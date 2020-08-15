@@ -12,7 +12,7 @@ import static org.junit.Assert.*;
 /**
  * Test logging, aborts, and recovery.
  */
-public class LogTest extends SimpleDbTestBase {
+public class LogTest extends simpledb.systemtest.SimpleDbTestBase {
     File file1;
     File file2;
     HeapFile hf1;
@@ -31,7 +31,7 @@ public class LogTest extends SimpleDbTestBase {
         Insert insert = new Insert(t.getId(), insertRow, hf.getId());
         insert.open();
         Tuple result = insert.next();
-        assertEquals(SystemTestUtil.SINGLE_INT_DESCRIPTOR, result.getTupleDesc());
+        assertEquals(simpledb.systemtest.SystemTestUtil.SINGLE_INT_DESCRIPTOR, result.getTupleDesc());
         assertEquals(1, ((IntField)result.getField(0)).getValue());
         assertFalse(insert.hasNext());
         insert.close();
@@ -68,13 +68,16 @@ public class LogTest extends SimpleDbTestBase {
         Database.getBufferPool().flushAllPages();
         if(t2 != -1)
             insertRow(hf, t, t2, 0);
+//        t.abort();
         t.commit();
     }
 
     void abort(Transaction t)
         throws DbException, TransactionAbortedException, IOException {
         // t.transactionComplete(true); // abort
+        Database.getLogFile().print();
         Database.getBufferPool().flushAllPages(); // XXX defeat NO-STEAL-based abort
+        Database.getLogFile().print();
         Database.getLogFile().logAbort(t.getId()); // does rollback too
         Database.getBufferPool().flushAllPages(); // prevent NO-STEAL-based abort from
                                                   // un-doing the rollback
@@ -193,6 +196,7 @@ public class LogTest extends SimpleDbTestBase {
     @Test public void TestAbort()
             throws IOException, DbException, TransactionAbortedException {
         setup();
+        System.out.println("---------");
         doInsert(hf1, 1, 2);
 
         // *** Test:
@@ -200,14 +204,15 @@ public class LogTest extends SimpleDbTestBase {
         // flush pages directly to heap file to defeat NO-STEAL policy
 
         dontInsert(hf1, 4, -1);
-
+        System.out.println("---------");
         Transaction t = new Transaction();
         t.start();
-        look(hf1, t, 1, true);
-        look(hf1, t, 2, true);
+        look(hf1, t, 1, false);
+        look(hf1, t, 2, false);
         look(hf1, t, 3, false);
         look(hf1, t, 4, false);
         t.commit();
+        System.out.println("---------");
     }
 
     @Test public void TestAbortCommitInterleaved()

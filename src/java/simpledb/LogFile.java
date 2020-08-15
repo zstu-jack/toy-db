@@ -4,6 +4,7 @@ package simpledb;
 import java.io.*;
 import java.util.*;
 import java.lang.reflect.*;
+import java.util.logging.LogRecord;
 
 /**
 LogFile implements the recovery subsystem of SimpleDb.  This class is
@@ -209,7 +210,6 @@ public class LogFile {
         */
         raf.writeInt(UPDATE_RECORD);
         raf.writeLong(tid.getId());
-
         writePageData(raf,before);
         writePageData(raf,after);
         raf.writeLong(currentOffset);
@@ -494,6 +494,17 @@ public class LogFile {
             synchronized (this) {
                 recoveryUndecided = false;
                 // some code goes here
+
+                /* Phase 1. Analysis */
+                // seek
+
+                // redo: (log recover phase)
+                // use disk to redo something that have not been done.
+                        // checkout point:
+                        // commit: write Page.
+                        //
+
+                // undo: find ABORT_RECORD and related transactionId do rollback.
             }
          }
     }
@@ -501,6 +512,7 @@ public class LogFile {
     /** Print out a human readable represenation of the log */
     public void print() throws IOException {
         // some code goes here
+
     }
 
     public  synchronized void force() throws IOException {

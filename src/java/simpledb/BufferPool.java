@@ -108,7 +108,7 @@ public class BufferPool {
                         }
                     }else{ // old one is shared lock.
                         if(perm.permLevel == Permissions.READ_ONLY.permLevel){ // now for read.
-                            System.out.println(tid.toString() + "acquire lock " +  Permissions.READ_ONLY.toString());
+                            System.out.println(tid.toString() + "acquire lock( " + pid.toString() + ")" +  Permissions.READ_ONLY.toString());
                             transactionIdMap.get(pid).add(tid);
 
                             if(!transactionIdSetMap.containsKey(tid)) transactionIdSetMap.put(tid, new HashSet<>());
@@ -126,7 +126,7 @@ public class BufferPool {
                         }
                     }
                 }else{
-                    System.out.println(tid.toString() + "acquire lock as " +  perm.toString());
+                    System.out.println(tid.toString() + "acquire lock(" + pid.toString() + ") as " +  perm.toString());
                     //System.out.println(tid.toString() + " acquire locks of page" + pid.toString());
                     transactionIdMap.put(pid, new HashSet<>());
                     transactionIdMap.get(pid).add(tid);
@@ -356,13 +356,27 @@ public class BufferPool {
     private synchronized  void flushPage(PageId pid) throws IOException {
         // some code goes here
         // not necessary for lab1
+
+        // append an update record to the log, with
+        // a before-image and after-image.
+
         if(pageID2Page.containsKey(pid)) {
+
             Page page = pageID2Page.get(pid);
+            TransactionId dirtier = page.isDirty();
+            if (dirtier != null){
+                Database.getLogFile().logWrite(dirtier, page.getBeforeImage(), page);                               // write to logfile.
+                Database.getLogFile().force();
+            }
+
             if(page.isDirty() != null) {    // only flush dirty page.
                 HeapFile heapFile = (HeapFile) Database.getCatalog().getDatabaseFile(pid.getTableId());
                 heapFile.writePage(page);
                 page.markDirty(false, null);
             }
+
+            // fixme: tricky above if(dirtier != null) already write the beforeImage into disk(logFile). here set new BeforeImage.
+            page.setBeforeImage();                                                                                  // oldData = getPageData().clone(); getPageData() read data from disk.
             // pageID2Page.remove(pid);
         }
     }

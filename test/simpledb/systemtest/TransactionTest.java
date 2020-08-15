@@ -19,7 +19,7 @@ import static org.junit.Assert.*;
  * Tests running concurrent transactions.
  * You do not need to pass this test until lab3.
  */
-public class TransactionTest extends SimpleDbTestBase {
+public class TransactionTest extends simpledb.systemtest.SimpleDbTestBase {
     // Wait up to 10 minutes for the test to complete
     private static final int TIMEOUT_MILLIS = 10 * 60 * 1000;
     private void validateTransactions(int threads)
@@ -27,7 +27,7 @@ public class TransactionTest extends SimpleDbTestBase {
         // Create a table with a single integer value = 0
         HashMap<Integer, Integer> columnSpecification = new HashMap<Integer, Integer>();
         columnSpecification.put(0, 0);
-        DbFile table = SystemTestUtil.createRandomHeapFile(1, 1, columnSpecification, null);
+        DbFile table = simpledb.systemtest.SystemTestUtil.createRandomHeapFile(1, 1, columnSpecification, null);
 
         ModifiableCyclicBarrier latch = new ModifiableCyclicBarrier(threads);
         XactionTester[] list = new XactionTester[threads];
@@ -102,7 +102,7 @@ public class TransactionTest extends SimpleDbTestBase {
 
                         // create a Tuple so that Insert can insert this new value
                         // into the table.
-                        Tuple t = new Tuple(SystemTestUtil.SINGLE_INT_DESCRIPTOR);
+                        Tuple t = new Tuple(simpledb.systemtest.SystemTestUtil.SINGLE_INT_DESCRIPTOR);
                         t.setField(0, new IntField(i+1));
 
                         // sleep to get some interesting thread interleavings
@@ -145,6 +145,8 @@ public class TransactionTest extends SimpleDbTestBase {
             } catch (Exception e) {
                 // Store exception for the master thread to handle
                 exception = e;
+
+                System.out.println(e.getMessage());
             }
             
             try {
@@ -229,7 +231,8 @@ public class TransactionTest extends SimpleDbTestBase {
     @Test public void testAllDirtyFails()
             throws IOException, DbException, TransactionAbortedException {
         // Allocate a file with ~10 pages of data
-        HeapFile f = SystemTestUtil.createRandomHeapFile(2, 512*10, null, null);
+
+        HeapFile f = simpledb.systemtest.SystemTestUtil.createRandomHeapFile(2, 512*10, null, null);
         Database.resetBufferPool(1);
 
         // BEGIN TRANSACTION
@@ -237,13 +240,15 @@ public class TransactionTest extends SimpleDbTestBase {
         t.start();
 
         // Insert a new row
-        EvictionTest.insertRow(f, t);
+        simpledb.systemtest.EvictionTest.insertRow(f, t);
 
         // Scanning the table must fail because it can't evict the dirty page
         try {
-            EvictionTest.findMagicTuple(f, t);
+            simpledb.systemtest.EvictionTest.findMagicTuple(f, t);
             fail("Expected scan to run out of available buffer pages");
-        } catch (DbException e) {}
+        } catch (DbException e) {
+            e.printStackTrace();
+        }
         t.commit();
     }
 
